@@ -67,8 +67,7 @@ class Set1Tests extends Specification {
 
   "challenge5" should {
     "encode string using repeating-key XOR" in {
-      val input = """Burning 'em, if you ain't quick and nimble
-I go crazy when I hear a cymbal"""
+      val input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
       val key = "ICE".getBytes
 
       val bytes = input.getBytes.zipWithIndex.map(bi => {
