@@ -81,9 +81,29 @@ class Set1Tests extends Specification {
   }
 
   "challenge6" should {
+    import scala.io.Source
+    val input = Source.fromURL(getClass.getResource("/challenge-data/6.txt")).getLines.mkString
+
     "compute Hamming distance of two strings" in {
       Hamming.distance("this is a test", "wokka wokka!!!") mustEqual 37
     }
-  }
 
+    /*
+    "find key size" in {
+      val keysize = (2 to 40).map(k => {
+        // rank this keysize by using Hamming distance on keysize-length sub blocks of input
+        //Hamming.distance(input.substring(0, k), input.substring(k, 2*k))/k
+
+        // finer tuning:
+        val numBlocks = 2 
+        input.grouped(k).grouped(2).take(numBlocks).map(ab => {
+          val List(a,b) = ab
+          dist = Hamming.distance(a, b)
+        }).sum / numBlocks
+      }).min
+
+      keysize mustEqual 2
+    }
+    */
+  }
 }
