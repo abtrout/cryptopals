@@ -8,6 +8,10 @@ class UtilSpec extends Specification {
     "encode string to base64" in {
       Base64Util.encode("cryptopals for life") mustEqual "Y3J5cHRvcGFscyBmb3IgbGlmZQ=="
     }
+
+    "decode string to base64" in {
+      Base64Util.decode("Y3J5cHRvcGFscyBmb3IgbGlmZQ==") mustEqual "cryptopals for life"
+    }
   }
 
   "Hamming" should {

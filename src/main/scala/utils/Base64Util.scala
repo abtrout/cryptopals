@@ -16,6 +16,17 @@ object Base64Util {
     )
   }
 
+  def encode(bytes: Array[Byte]) = {
+    val pad = "=" * ((3 - bytes.length % 3) % 3)
+    val bs = bytes.padTo(bytes.length + pad.length, 0.toByte)
+    val result = bs.grouped(3).flatMap(x => toIndices(x).map(alphabet.charAt(_))).mkString
+
+    result.slice(0, result.length - pad.length) + pad
+  }
+
+  def encode(input: String): String = encode(input.getBytes)
+  
+  /*
   private def fromIndices(abcd: Array[Byte]) = {
     val Array(a,b,c,d) = abcd
     val n = (a << 18) + (b << 12) + (c << 6) + d
@@ -26,14 +37,19 @@ object Base64Util {
       n & 255
     )
   }
+  
+  def decode(bytes: Array[Byte]) = {
+    val padlength = (4 - bytes.length % 4) % 4
+    val bs = bytes.padTo(bytes.length + padlength, 0.toByte)
+    val result = bs.grouped(4).flatMap(x => fromIndices(x).map(_.toChar)).mkString
 
-  def encode(bytes: Array[Byte]) = {
-    val pad = "=" * ((3 - bytes.length % 3) % 3)
-    val bs = bytes.padTo(bytes.length + pad.length, 0.toByte)
-    val result = bs.grouped(3).flatMap(x => toIndices(x).map(alphabet.charAt(_))).mkString
-
-    result.slice(0, result.length - pad.length) + pad
+    result.slice(0, result.length - padlength)
   }
 
-  def encode(input: String): String = encode(input.getBytes)
+  def decode(input: String): String = {
+    val stripped = s"[^${alphabet}]".r.replaceAllIn(input, "")
+    println(stripped)
+    decode(stripped.getBytes)
+  }
+  */
 }
