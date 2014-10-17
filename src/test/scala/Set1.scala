@@ -202,4 +202,29 @@ class Set1Tests extends Specification {
       ).mkString("\n")
     }
   }
+
+  "challenge7" should {
+    import javax.crypto.Cipher
+    import javax.crypto.spec.SecretKeySpec
+
+    import scala.io.Source
+    val input = Base64Util.decode {
+      val lines = Source.fromURL(getClass.getResource("/challenge-data/7.txt")).getLines.mkString
+      println(lines.length)
+      lines
+    }
+    println(input.length)
+
+
+    "decrypt AES-128 ECB" in {
+      val cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
+      val key = new SecretKeySpec("YELLOW SUBMARINE".getBytes, "AES")
+      cipher.init(Cipher.DECRYPT_MODE, key)
+
+      val bytes = input.getBytes
+      val plaintext = cipher.doFinal(bytes).map(_.toChar).mkString
+
+      plaintext mustEqual "asdf"
+    }
+  }
 }
