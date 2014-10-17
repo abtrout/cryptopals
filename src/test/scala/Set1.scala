@@ -50,9 +50,9 @@ class Set1Tests extends Specification {
 
   "challenge4" should {
     import scala.io.Source
+    val lines = Source.fromURL(getClass.getResource("/challenge-data/4.txt")).getLines
 
     "find line from file that was encoded with single-character XOR" in {
-      val lines = Source.fromURL(getClass.getResource("/challenge-data/4.txt")).getLines
       val (key, line, _) = lines.flatMap(line => {
         val bytes = HexUtil.toBytes(line)
         (32 to 126).map(k => (k.toChar, line, rankGuess(k.toChar, bytes)))
@@ -105,10 +105,7 @@ class Set1Tests extends Specification {
       val blockLength = input.length / keysize
 
       val key = (0 until keysize).map(i => {
-        val block = (0 until blockLength).map(j => {
-          input.charAt(i + (j*keysize)).toByte
-        }).toArray
-
+        val block = (0 until blockLength).map(j => input.charAt(i + (j*keysize)).toByte).toArray
         (32 to 126).map(k => (k.toChar, rankGuess(k.toChar, block))).maxBy(_._2)._1
       }).mkString
 
@@ -116,7 +113,6 @@ class Set1Tests extends Specification {
     }
 
     "decode plaintext" in {
-
       val key = "Terminator X: Bring the noise"
       val plaintext = input.zipWithIndex.map(x => {
         (x._1.toByte ^ key.charAt(x._2 % key.length)).toChar
