@@ -15,8 +15,10 @@ class UtilSpec extends Specification {
   }
 
   "Hamming" should {
+
     "compute Hamming distance" in {
-      Hamming.distance("abcdefg", "abcdefg") mustEqual 0  
+      Hamming.distance("cryptopals", "cryptopals") mustEqual 0  
+      Hamming.distance(Array(63.toByte), Array(31.toByte)) mustEqual 1
       Hamming.distance("this is a test", "wokka wokka!!!") mustEqual 37
     }
   }
