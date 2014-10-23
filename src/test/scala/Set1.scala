@@ -1,6 +1,7 @@
 package net.logitank.cryptopals
 
 import org.specs2.mutable.Specification
+import scala.io.Source
 
 class Set1Tests extends Specification {
 
@@ -49,7 +50,6 @@ class Set1Tests extends Specification {
   }
 
   "challenge4" should {
-    import scala.io.Source
     val lines = Source.fromURL(getClass.getResource("/challenge-data/4.txt")).getLines
 
     "find line from file that was encoded with single-character XOR" in {
@@ -81,7 +81,6 @@ class Set1Tests extends Specification {
   }
 
   "challenge6" should {
-    import scala.io.Source
     val input = Base64Util.decode {
       Source.fromURL(getClass.getResource("/challenge-data/6.txt")).getLines.mkString
     }
@@ -118,88 +117,7 @@ class Set1Tests extends Specification {
         (x._1.toByte ^ key.charAt(x._2 % key.length)).toChar
       }).mkString
 
-      plaintext mustEqual Seq(
-        "I'm back and I'm ringin' the bell ",
-        "A rockin' on the mike while the fly girls yell ",
-        "In ecstasy in the back of me ",
-        "Well that's my DJ Deshay cuttin' all them Z's ",
-        "Hittin' hard and the girlies goin' crazy ",
-        "Vanilla's on the mike, man I'm not lazy. ",
-        "",
-        "I'm lettin' my drug kick in ",
-        "It controls my mouth and I begin ",
-        "To just let it flow, let my concepts go ",
-        "My posse's to the side yellin', Go Vanilla Go! ",
-        "",
-        "Smooth 'cause that's the way I will be ",
-        "And if you don't give a damn, then ",
-        "Why you starin' at me ",
-        "So get off 'cause I control the stage ",
-        "There's no dissin' allowed ",
-        "I'm in my own phase ",
-        "The girlies sa y they love me and that is ok ",
-        "And I can dance better than any kid n' play ",
-        "",
-        "Stage 2 -- Yea the one ya' wanna listen to ",
-        "It's off my head so let the beat play through ",
-        "So I can funk it up and make it sound good ",
-        "1-2-3 Yo -- Knock on some wood ",
-        "For good luck, I like my rhymes atrocious ",
-        "Supercalafragilisticexpialidocious ",
-        "I'm an effect and that you can bet ",
-        "I can take a fly girl and make her wet. ",
-        "",
-        "I'm like Samson -- Samson to Delilah ",
-        "There's no denyin', You can try to hang ",
-        "But you'll keep tryin' to get my style ",
-        "Over and over, practice makes perfect ",
-        "But not if you're a loafer. ",
-        "",
-        "You'll get nowhere, no place, no time, no girls ",
-        "Soon -- Oh my God, homebody, you probably eat ",
-        "Spaghetti with a spoon! Come on and say it! ",
-        "",
-        "VIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino ",
-        "Intoxicating so you stagger like a wino ",
-        "So punks stop trying and girl stop cryin' ",
-        "Vanilla Ice is sellin' and you people are buyin' ",
-        "'Cause why the freaks are jockin' like Crazy Glue ",
-        "Movin' and groovin' trying to sing along ",
-        "All through the ghetto groovin' this here song ",
-        "Now you're amazed by the VIP posse. ",
-        "",
-        "Steppin' so hard like a German Nazi ",
-        "Startled by the bases hittin' ground ",
-        "There's no trippin' on mine, I'm just gettin' down ",
-        "Sparkamatic, I'm hangin' tight like a fanatic ",
-        "You trapped me once and I thought that ",
-        "You might have it ",
-        "So step down and lend me your ear ",
-        "'89 in my time! You, '90 is my year. ",
-        "",
-        "You're weakenin' fast, YO! and I can tell it ",
-        "Your body's gettin' hot, so, so I can smell it ",
-        "So don't be mad and don't be sad ",
-        "'Cause the lyrics belong to ICE, You can call me Dad ",
-        "You're pitchin' a fit, so step back and endure ",
-        "Let the witch doctor, Ice, do the dance to cure ",
-        "So come up close and don't be square ",
-        "You wanna battle me -- Anytime, anywhere ",
-        "",
-        "You thought that I was weak, Boy, you're dead wrong ",
-        "So come on, everybody and sing this song ",
-        "",
-        "Say -- Play that funky music Say, go white boy, go white boy go ",
-        "play that funky music Go white boy, go white boy, go ",
-        "Lay down and boogie and play that funky music till you die. ",
-        "",
-        "Play that funky music Come on, Come on, let me hear ",
-        "Play that funky music white boy you say it, say it ",
-        "Play that funky music A little louder now ",
-        "Play that funky music, white boy Come on, Come on, Come on ",
-        "Play that funky music ",
-        ""
-      ).mkString("\n")
+      plaintext mustEqual VanilaIce.playThatFunkyMusic
     }
   }
 
@@ -207,24 +125,106 @@ class Set1Tests extends Specification {
     import javax.crypto.Cipher
     import javax.crypto.spec.SecretKeySpec
 
-    import scala.io.Source
     val input = Base64Util.decode {
-      val lines = Source.fromURL(getClass.getResource("/challenge-data/7.txt")).getLines.mkString
-      println(lines.length)
-      lines
+      Source.fromURL(getClass.getResource("/challenge-data/7.txt")).getLines.mkString
     }
-    println(input.length)
-
 
     "decrypt AES-128 ECB" in {
-      val cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
       val key = new SecretKeySpec("YELLOW SUBMARINE".getBytes, "AES")
+      val cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
       cipher.init(Cipher.DECRYPT_MODE, key)
 
-      val bytes = input.getBytes
+      // .toList because of implicit conversion ambiguity
+      // .map(_.toByte) because .getBytes didn't handle UTF-8 well (even with "utf-8" encoding specified)
+      val bytes = input.toList.map(_.toByte).toArray
       val plaintext = cipher.doFinal(bytes).map(_.toChar).mkString
-
-      plaintext mustEqual "asdf"
+      plaintext mustEqual VanilaIce.playThatFunkyMusic
     }
   }
+}
+
+object VanilaIce {
+
+  def playThatFunkyMusic = Seq(
+    "I'm back and I'm ringin' the bell ",
+    "A rockin' on the mike while the fly girls yell ",
+    "In ecstasy in the back of me ",
+    "Well that's my DJ Deshay cuttin' all them Z's ",
+    "Hittin' hard and the girlies goin' crazy ",
+    "Vanilla's on the mike, man I'm not lazy. ",
+    "",
+    "I'm lettin' my drug kick in ",
+    "It controls my mouth and I begin ",
+    "To just let it flow, let my concepts go ",
+    "My posse's to the side yellin', Go Vanilla Go! ",
+    "",
+    "Smooth 'cause that's the way I will be ",
+    "And if you don't give a damn, then ",
+    "Why you starin' at me ",
+    "So get off 'cause I control the stage ",
+    "There's no dissin' allowed ",
+    "I'm in my own phase ",
+    "The girlies sa y they love me and that is ok ",
+    "And I can dance better than any kid n' play ",
+    "",
+    "Stage 2 -- Yea the one ya' wanna listen to ",
+    "It's off my head so let the beat play through ",
+    "So I can funk it up and make it sound good ",
+    "1-2-3 Yo -- Knock on some wood ",
+    "For good luck, I like my rhymes atrocious ",
+    "Supercalafragilisticexpialidocious ",
+    "I'm an effect and that you can bet ",
+    "I can take a fly girl and make her wet. ",
+    "",
+    "I'm like Samson -- Samson to Delilah ",
+    "There's no denyin', You can try to hang ",
+    "But you'll keep tryin' to get my style ",
+    "Over and over, practice makes perfect ",
+    "But not if you're a loafer. ",
+    "",
+    "You'll get nowhere, no place, no time, no girls ",
+    "Soon -- Oh my God, homebody, you probably eat ",
+    "Spaghetti with a spoon! Come on and say it! ",
+    "",
+    "VIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino ",
+    "Intoxicating so you stagger like a wino ",
+    "So punks stop trying and girl stop cryin' ",
+    "Vanilla Ice is sellin' and you people are buyin' ",
+    "'Cause why the freaks are jockin' like Crazy Glue ",
+    "Movin' and groovin' trying to sing along ",
+    "All through the ghetto groovin' this here song ",
+    "Now you're amazed by the VIP posse. ",
+    "",
+    "Steppin' so hard like a German Nazi ",
+    "Startled by the bases hittin' ground ",
+    "There's no trippin' on mine, I'm just gettin' down ",
+    "Sparkamatic, I'm hangin' tight like a fanatic ",
+    "You trapped me once and I thought that ",
+    "You might have it ",
+    "So step down and lend me your ear ",
+    "'89 in my time! You, '90 is my year. ",
+    "",
+    "You're weakenin' fast, YO! and I can tell it ",
+    "Your body's gettin' hot, so, so I can smell it ",
+    "So don't be mad and don't be sad ",
+    "'Cause the lyrics belong to ICE, You can call me Dad ",
+    "You're pitchin' a fit, so step back and endure ",
+    "Let the witch doctor, Ice, do the dance to cure ",
+    "So come up close and don't be square ",
+    "You wanna battle me -- Anytime, anywhere ",
+    "",
+    "You thought that I was weak, Boy, you're dead wrong ",
+    "So come on, everybody and sing this song ",
+    "",
+    "Say -- Play that funky music Say, go white boy, go white boy go ",
+    "play that funky music Go white boy, go white boy, go ",
+    "Lay down and boogie and play that funky music till you die. ",
+    "",
+    "Play that funky music Come on, Come on, let me hear ",
+    "Play that funky music white boy you say it, say it ",
+    "Play that funky music A little louder now ",
+    "Play that funky music, white boy Come on, Come on, Come on ",
+    "Play that funky music ",
+    ""
+  ).mkString("\n")
 }
