@@ -1,11 +1,12 @@
 # cryptopals
 
-I'm working through the Matasano [crypto challenges](http://cryptopals.com) and keeping my work here. Everything is in scala. Solutions are written as unit tests. 
+I'm working through the Matasano [crypto challenges](http://cryptopals.com) and keeping my work here. If you're working on the challenges yourself, resist the urge to peek at solutions! Struggling on your own is beneficial.
 
+Everything is in scala. Solutions are written as unit tests. 
 * Test specs are in [src/test/scala](https://github.com/abtrout/cryptopals/tree/master/src/test/scala)
 * Utility methods are in [src/main/scala/utils](https://github.com/abtrout/cryptopals/tree/master/src/main/scala/utils) 
+* Run them with `sbt`
 
-Run them with `sbt`:
 ```
 > test-only net.logitank.cryptopals.Set1
 [info] Set1
