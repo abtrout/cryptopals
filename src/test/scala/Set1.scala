@@ -3,7 +3,7 @@ package net.logitank.cryptopals
 import org.specs2.mutable.Specification
 import scala.io.Source
 
-class Set1Tests extends Specification {
+class Set1 extends Specification {
 
   "challenge1" should {
     "convert hex to base64" in {

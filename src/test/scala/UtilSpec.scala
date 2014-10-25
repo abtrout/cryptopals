@@ -2,7 +2,7 @@ package net.logitank.cryptopals
 
 import org.specs2.mutable.Specification
 
-class UtilSpec extends Specification {
+class Utils extends Specification {
 
   "Base64Util" should {
     "encode string to base64" in {
