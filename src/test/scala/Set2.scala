@@ -22,10 +22,29 @@ class Set2 extends Specification {
       CryptoUtil.AES.decrypt(cipherText, key) mustEqual plainText
     }
 
-    "implement CBC mode" in {
-      
+    def fixedXOR(a: String, b: String) = a.zip(b).map(ab => (ab._1 ^ ab._2).toByte)
 
-      1 mustEqual 1
+    "implement CBC mode" in {
+      lazy val cipherText = Base64Util.decode {
+        Source.fromURL(getClass.getResource("/challenge-data/10.txt")).getLines.mkString
+      }
+
+      val key = "YELLOW SUBMARINE"
+      val IV = "\u0000" * key.length
+
+
+      val plainText = (IV + cipherText)
+        .grouped(key.length).take(4).sliding(2)
+        .map(x => {
+          val Seq(previousBlock, currentBlock) = x
+
+          fixedXOR(
+            CryptoUtil.AES.decrypt(currentBlock, key),
+            previousBlock
+          )
+        }).mkString
+
+      plainText mustEqual "ASDF"
     }
   }
 
