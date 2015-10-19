@@ -122,8 +122,12 @@ class Set1 extends Specification {
 
   "challenge7" should {
     "decrypt AES-128 ECB" in {
-      val input = Base64Util.decode(Source.fromURL(getClass.getResource("/challenge-data/7.txt")).mkString)
-      val plaintext = CryptoUtil.AES.decrypt(input, "YELLOW SUBMARINE")
+      val input = Base64Util.decode {
+        Source.fromURL(getClass.getResource("/challenge-data/7.txt")).mkString
+      }
+
+      val key = "YELLOW SUBMARINE"
+      val plaintext = AES.ECB.decrypt(input, key)
 
       plaintext mustEqual Lyrics.playThatFunkyMusic
     }

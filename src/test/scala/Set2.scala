@@ -8,7 +8,6 @@ class Set2 extends Specification {
   "challenge9" should {
     "implement PKCS#7 padding" in {
       import CryptoUtil.Padding._
-      
       "YELLOW SUBMARINE".pkcs7(20) mustEqual "YELLOW SUBMARINE\u0004\u0004\u0004\u0004"
     }
   }
@@ -16,35 +15,22 @@ class Set2 extends Specification {
   "challenge10" should {
     "encrypt ECB mode" in {
       val key = "YELLOW SUBMARINE"
-      val plainText = "We all live in a"
-      val cipherText = CryptoUtil.AES.encrypt(plainText, key)
+      val plaintext = "We all live in aYELLOW SUBMARINEYELLOW SUBMARINEYELLOW SUBMARINE"
+      val ciphertext = AES.ECB.encrypt(plaintext, key)
 
-      CryptoUtil.AES.decrypt(cipherText, key) mustEqual plainText
+      AES.ECB.decrypt(ciphertext, key) mustEqual plaintext
     }
 
-    def fixedXOR(a: String, b: String) = a.zip(b).map(ab => (ab._1 ^ ab._2).toByte)
-
     "implement CBC mode" in {
-      lazy val cipherText = Base64Util.decode {
-        Source.fromURL(getClass.getResource("/challenge-data/10.txt")).getLines.mkString
+      lazy val ciphertext = Base64Util.decode {
+        Source.fromURL(getClass.getResource("/challenge-data/10.txt")).mkString
       }
 
       val key = "YELLOW SUBMARINE"
       val IV = "\u0000" * key.length
 
-
-      val plainText = (IV + cipherText)
-        .grouped(key.length).take(4).sliding(2)
-        .map(x => {
-          val Seq(previousBlock, currentBlock) = x
-
-          fixedXOR(
-            CryptoUtil.AES.decrypt(currentBlock, key),
-            previousBlock
-          )
-        }).mkString
-
-      plainText mustEqual "ASDF"
+      val plaintext = AES.CBC.decrypt(ciphertext, key, IV)
+      plaintext must startWith("I'm back and I'm ringin' the bell")
     }
   }
 
