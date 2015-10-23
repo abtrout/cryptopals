@@ -3,12 +3,20 @@ package net.logitank.cryptopals
 import org.specs2.mutable.Specification
 import scala.io.Source
 
+import net.logitank.cryptopals.Padding._
+
 class Set2 extends Specification {
   
   "challenge9" should {
     "implement PKCS#7 padding" in {
-      import CryptoUtil.Padding._
-      "YELLOW SUBMARINE".pkcs7(20) mustEqual "YELLOW SUBMARINE\u0004\u0004\u0004\u0004"
+      val key = "YELLOW SUBMARINE"
+      val kbytes = key.toCharArray.map(_.toByte)
+
+      val paddedKey = "YELLOW SUBMARINE\u0004\u0004\u0004\u0004"
+      val paddedBytes = paddedKey.toCharArray.map(_.toByte)
+
+      key.pkcs7(20) mustEqual paddedKey
+      kbytes.pkcs7(20) mustEqual paddedBytes
     }
   }
 
