@@ -7,7 +7,11 @@ object Hamming {
   def distance(as: Array[Byte], bs: Array[Byte]) = {
     as.zip(bs).map(ab => bitsum(ab._1 ^ ab._2)).sum
   }
-  
-  // for convenience:
-  def distance(s1: String, s2: String): Int = distance(s1.getBytes, s2.getBytes)
+
+  def distance(s1: String, s2: String): Int = {
+    val as = s1.toCharArray.map(_.toByte)
+    val bs = s2.toCharArray.map(_.toByte)
+
+    distance(as, bs)
+  }
 }
