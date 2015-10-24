@@ -46,11 +46,11 @@ class Set2 extends Specification {
     }
   }
 
-  "challenge11" should {
-    // Using Kestrel combinator <http://stackoverflow.com/a/9673294>
-    def kestrel[A](x: A)(f: A => Unit): A = { f(x); x }
-    def randBytes(k: Int) = kestrel(Array.fill[Byte](k)(0))(Random.nextBytes)
+  // Using Kestrel combinator <http://stackoverflow.com/a/9673294>
+  def kestrel[A](x: A)(f: A => Unit): A = { f(x); x }
+  def randBytes(k: Int) = kestrel(Array.fill[Byte](k)(0))(Random.nextBytes)
 
+  "challenge11" should {
     def encryptionOracle(plaintext: String) = {
       val pbytes = {
         randBytes(Random.nextInt(6) + 5) ++
@@ -80,7 +80,62 @@ class Set2 extends Specification {
     }
   }
 
-  //"challenge12" should {}
+  "challenge12" should {
+    val unknownString = Base64Util.decode {
+      "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg" +
+      "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq" +
+      "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg" +
+      "YnkK"
+    }
+
+    val unknownBytes = unknownString.toCharArray.map(_.toByte)
+    val kbytes = randBytes(16)
+
+    def ecbOracle(plaintext: String) = {
+      val pbytes = plaintext.toCharArray.map(_.toByte) ++ unknownBytes
+      val input = pbytes.pkcs7(kbytes.length)
+      AES.ECB.encrypt(input, kbytes)
+    }
+
+    "detect block size from ciphertext" in {
+      val base = ecbOracle("").length
+      def tryBlock(n: Int): Int = {
+        val len = ecbOracle("A" * n).length
+        if(len > base) len - base
+        else tryBlock(n+1)
+      }
+
+      val blocksize = tryBlock(1)
+      blocksize mustEqual 16
+    }
+
+    "detect ECB mode from ciphertext" in {
+      val blocksize = 16
+      val cbytes = ecbOracle("A" * (blocksize * 10))
+      val blocks = cbytes.grouped(blocksize).toList.map(_.toList)
+
+      blocks.length - blocks.toSet.size must be greaterThan(0)
+    }
+
+    "decrypt ciphertext one block at a time" in {
+      val blocksize = 16
+      val base = "A" * (blocksize - 1)
+
+      val plaintext =
+        unknownBytes.flatMap { b =>
+          val index = (-128 to 127).map { k =>
+            val cbytes = ecbOracle(base + k.toChar)
+            (k.toChar, cbytes.take(blocksize).toList)
+          } toMap
+
+          val cbytes = ecbOracle(base + b.toChar).take(blocksize).toList
+          index.find(k => k._2 == cbytes).map(_._1)
+        } mkString
+
+      plaintext mustEqual unknownString
+    }
+  }
+
   //"challenge13" should {}
   //"challenge14" should {}
   //"challenge15" should {}
