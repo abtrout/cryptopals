@@ -11,13 +11,13 @@ class Set2 extends Specification {
   "challenge9" should {
     "implement PKCS#7 padding" in {
       val key = "YELLOW SUBMARINE"
-      val kbytes = key.toCharArray.map(_.toByte)
-
+      val kbytes = "YELLOW SUBMARINE".toCharArray.map(_.toByte)
       val paddedKey = "YELLOW SUBMARINE\u0004\u0004\u0004\u0004"
       val paddedBytes = paddedKey.toCharArray.map(_.toByte)
 
-      key.pkcs7(20) mustEqual paddedKey
-      kbytes.pkcs7(20) mustEqual paddedBytes
+      kbytes.padPKCS7(20) mustEqual paddedBytes
+      kbytes.padPKCS7(16).length mustEqual 32
+      kbytes.padPKCS7(16).unpadPKCS7.length mustEqual kbytes.length
     }
   }
 
@@ -39,7 +39,7 @@ class Set2 extends Specification {
       val kbytes = "YELLOW SUBMARINE".getBytes
       val iv = Array.fill[Byte](kbytes.length)(0.toByte)
 
-      val pbytes = AES.CBC.decrypt(cbytes, kbytes, iv)
+      val pbytes: Array[Byte] = AES.CBC.decrypt(cbytes, kbytes, iv)
       val plaintext = pbytes.map(_.toChar).mkString
 
       plaintext must startWith("I'm back and I'm ringin' the bell")
@@ -59,13 +59,15 @@ class Set2 extends Specification {
       }
 
       val kbytes = randBytes(16)
-      val input = pbytes.pkcs7(kbytes.length)
+      val input = pbytes.padPKCS7(kbytes.length)
 
       Random.nextBoolean match {
-        case false => ("ECB", AES.ECB.encrypt(input, kbytes))
+        case false =>
+          val input = pbytes.padPKCS7(kbytes.length)
+          ("ECB", AES.ECB.encrypt(input, kbytes))
         case true =>
           val iv = randBytes(kbytes.length)
-          ("CBC", AES.CBC.encrypt(input, kbytes, iv))
+          ("CBC", AES.CBC.encrypt(pbytes, kbytes, iv))
       }
     }
 
@@ -93,7 +95,7 @@ class Set2 extends Specification {
 
     def ecbOracle(plaintext: String) = {
       val pbytes = plaintext.toCharArray.map(_.toByte) ++ unknownBytes
-      val input = pbytes.pkcs7(kbytes.length)
+      val input = pbytes.padPKCS7(kbytes.length)
       AES.ECB.encrypt(input, kbytes)
     }
 
@@ -121,13 +123,13 @@ class Set2 extends Specification {
       val blocksize = 16
       val base = "A" * (blocksize - 1)
 
+      val index = (-128 to 127).map { k =>
+        val cbytes = ecbOracle(base + k.toChar)
+        (k.toChar, cbytes.take(blocksize).toList)
+      } toMap
+
       val plaintext =
         unknownBytes.flatMap { b =>
-          val index = (-128 to 127).map { k =>
-            val cbytes = ecbOracle(base + k.toChar)
-            (k.toChar, cbytes.take(blocksize).toList)
-          } toMap
-
           val cbytes = ecbOracle(base + b.toChar).take(blocksize).toList
           index.find(k => k._2 == cbytes).map(_._1)
         } mkString

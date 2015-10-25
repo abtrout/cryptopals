@@ -12,7 +12,7 @@ object CBC {
 
   def encrypt(pbytes: Array[Byte], kbytes: Array[Byte], iv: Array[Byte]) = {
     val blocks =
-      pbytes.pkcs7(kbytes.length)
+      pbytes.padPKCS7(kbytes.length)
         .grouped(kbytes.length)
         .foldLeft(List(iv)) { (cs, p) =>
           val input = fixedXOR(cs.head, p)
@@ -23,12 +23,14 @@ object CBC {
   }
 
   def decrypt(cbytes: Array[Byte], kbytes: Array[Byte], iv: Array[Byte]) = {
-    (iv ++ cbytes)
+    val bytes = (iv ++ cbytes)
       .grouped(kbytes.length).sliding(2)
       .flatMap { x =>
         val Seq(previousBlock, currentBlock) = x
         fixedXOR(ECB.decrypt(currentBlock, kbytes), previousBlock)
-      }
+      } toArray
+
+    bytes.unpadPKCS7
   }
 }
 
