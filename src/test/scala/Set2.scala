@@ -138,8 +138,131 @@ class Set2 extends Specification {
     }
   }
 
-  //"challenge13" should {}
-  //"challenge14" should {}
-  //"challenge15" should {}
+  "challenge13" should {
+    def encodeParams(params: Map[String, String]) =
+      params.toList.map(p => s"${p._1}=${p._2}").mkString("&")
+
+    def decodeParams(params: String) =
+      params.split('&').flatMap {
+        _.split('=').toList match {
+          case key :: value :: _ => Some((key, value))
+          case key :: _ => Some((key, ""))
+          case Nil => None
+        }
+      } toMap
+
+    "decode parameter String to Map" in {
+      val paramString = "a=1&b=2&c="
+      val paramMap = Map(
+        "a" -> "1",
+        "b" -> "2",
+        "c" -> "")
+
+      decodeParams(paramString) mustEqual paramMap
+      encodeParams(paramMap) mustEqual paramString
+    }
+
+    val blocksize = 16
+    // knowledge of the key is assumed 
+    val kbytes = randBytes(blocksize)
+
+    def profileFor(email: String) = {
+      val profile = Map(
+        "email" -> email.split("&|=")(0), 
+        "uid" -> "10",
+        "role" -> "user")
+
+      val pbytes =
+        encodeParams(profile)
+          .toCharArray.map(_.toByte)
+          .padPKCS7(blocksize)
+
+      AES.ECB.encrypt(pbytes, kbytes)
+    }
+
+    def profileFrom(cbytes: Array[Byte]) = {
+      val pbytes = AES.ECB.decrypt(cbytes, kbytes)
+      // I didn't build PKCS#7 into ECB, so we manually unpad
+      pbytes.unpadPKCS7.map(_.toChar).mkString
+    }
+
+    "get user profile by email address" in {
+      val params = "email=foo@bar.com&uid=10&role=user"
+
+      // This also tests profileFrom (AES), and profileFor (AES)
+      profileFrom(profileFor("foo@bar.com&role=admin")) mustEqual params
+      profileFrom(profileFor("foo@bar.com")) mustEqual params
+    }
+
+    "create admin profile by ECB cut-and-paste attack" in {
+      // 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF
+      // email=foooo@bar. com&uid=10&role= user
+      // email=AAAAAAAAAA admin&uid=10&rol e=user
+      // email=foooo@bar. com&uid=10&role= admin&uid=10&rol e=user
+      val cbytes: Array[Byte] =
+        profileFor("foooo@bar.com").slice(0, 2*blocksize) ++
+        profileFor("AAAAAAAAAAadmin").drop(blocksize)
+
+      profileFrom(cbytes) mustEqual "email=foooo@bar.com&uid=10&role=admin&uid=10&role=user" 
+    }
+  }
+
+  "challenge14" should {
+    val unknownString = Base64Util.decode {
+      "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg" +
+      "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq" +
+      "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg" +
+      "YnkK"
+    }
+
+    val blocksize = 16
+    val unknownBytes = unknownString.toCharArray.map(_.toByte)
+    val kbytes = randBytes(blocksize)
+
+    def ecbOracle(plaintext: String) = {
+      val pbytes = {
+        // Prepend up to one block of random bytes
+        randBytes(Random.nextInt(16)) ++
+        plaintext.toCharArray.map(_.toByte) ++
+        unknownBytes
+      }
+
+      val input = pbytes.padPKCS7(kbytes.length)
+      AES.ECB.encrypt(input, kbytes)
+    }
+
+    "decrypt ECB one byte at a timer with random prefix" in {
+      // One thing we can do is reliably generate blocks of a
+      // repeated single value, so we do that.
+      val index = (-128 to 127).map { k =>
+        val cbytes = ecbOracle(("" + k.toChar) * (2 * blocksize))
+        (k.toChar, cbytes.slice(blocksize, 2 * blocksize).toList)
+      } toMap
+
+      val plaintext = unknownBytes.flatMap { b =>
+        val cbytes = ecbOracle(("" + b.toChar) * (2 * blocksize))
+          .slice(blocksize, 2 * blocksize).toList
+
+        index.find(k => k._2 == cbytes).map(_._1)
+      } mkString
+
+      plaintext mustEqual unknownString
+    }
+  }
+
+  "challenge15" should {
+    "remove valid PKCS#7 padding" in {
+      val str = "ICE ICE BABY\u0004\u0004\u0004\u0004"
+      val valid = str.toCharArray.map(_.toByte).unpadPKCS7
+      valid.map(_.toChar).mkString mustEqual("ICE ICE BABY")
+    }
+
+    "throw Exception on invalid PKCS#7 padding" in {
+      val str = "ICE ICE BABY\u0005\u0005\u0005\u0005"
+      val invalid = str.toCharArray.map(_.toByte)
+      invalid.unpadPKCS7 must throwA(new Exception("Invalid PKCS#7 padding"))
+    }
+  }
+
   //"challenge16" should {}
 }
