@@ -264,5 +264,45 @@ class Set2 extends Specification {
     }
   }
 
-  //"challenge16" should {}
+  "challenge16" should {
+    val blocksize = 16
+    val kbytes = randBytes(blocksize)
+    val iv = randBytes(blocksize)
+
+    def getUser(input: String) = {
+      val quotedInput =
+        input.replaceAll(" ", "%20")
+          .replaceAll(";", "%3B")
+          .replaceAll("=", "%3D")
+
+      val pbytes = List(
+          "comment1=cooking%20MCs",
+          s"userdata=$quotedInput",
+          "comment2=%20like%20a%20pound%20of%20bacon"
+        ).mkString(";").toCharArray.map(_.toByte)
+
+      AES.CBC.encrypt(pbytes, kbytes, iv)
+    }
+
+    def isAdminUser(cbytes: Array[Byte]) =
+      AES.CBC.decrypt(cbytes, kbytes, iv)
+        .map(_.toChar).mkString.split(';')
+        .find(_ == "admin=true")
+        .isDefined
+
+    "generates User data" in {
+      val cbytes = getUser("van winckle;admin=true")
+      isAdminUser(cbytes) mustEqual false
+    }
+
+    "flip CBC bits to generate admin user" in {
+      // One block padding: 0123456789abcdef0123456789abcdef
+      val cbytes = getUser("AAAAAAAAAAAAAAAAAAAAA#admin@true")
+      // Flip our bits in the padding block, since it will be scrambled
+      cbytes(37) = (cbytes(37).toInt ^ '#'.toInt ^ ';'.toInt).toByte
+      cbytes(43) = (cbytes(43).toInt ^ '@'.toInt ^ '='.toInt).toByte
+
+      isAdminUser(cbytes) mustEqual true
+    }
+  }
 }
