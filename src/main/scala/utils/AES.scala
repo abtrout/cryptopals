@@ -4,18 +4,16 @@ import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
 import net.logitank.cryptopals.Padding._
+import net.logitank.cryptopals.XORUtil
 
 object CBC {
-
-  private def fixedXOR(as: Array[Byte], bs: Array[Byte]): Array[Byte] =
-    as.zip(bs).map(ab => (ab._1 ^ ab._2).toByte)
 
   def encrypt(pbytes: Array[Byte], kbytes: Array[Byte], iv: Array[Byte]) = {
     val blocks =
       pbytes.padPKCS7(kbytes.length)
         .grouped(kbytes.length)
         .foldLeft(List(iv)) { (cs, p) =>
-          val input = fixedXOR(cs.head, p)
+          val input = XORUtil.fixedXOR(cs.head, p)
           ECB.encrypt(input, kbytes) :: cs
         }
 
@@ -27,7 +25,7 @@ object CBC {
       .grouped(kbytes.length).sliding(2)
       .flatMap { x =>
         val Seq(previousBlock, currentBlock) = x
-        fixedXOR(ECB.decrypt(currentBlock, kbytes), previousBlock)
+        XORUtil.fixedXOR(ECB.decrypt(currentBlock, kbytes), previousBlock)
       } toArray
 
     bytes.unpadPKCS7

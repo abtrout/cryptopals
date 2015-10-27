@@ -18,9 +18,9 @@ class Set1 extends Specification {
     "compute fixed XOR" in {
       val as = HexUtil.toBytes("1c0111001f010100061a024b53535009181c")
       val bs = HexUtil.toBytes("686974207468652062756c6c277320657965")
-      val fixedXOR = HexUtil.fromBytes(as.zip(bs).map(ab => (ab._1 ^ ab._2).toByte))
+      val fixedXOR = XORUtil.fixedXOR(as, bs)
 
-      fixedXOR mustEqual "746865206b696420646f6e277420706c6179"
+      HexUtil.fromBytes(fixedXOR) mustEqual "746865206b696420646f6e277420706c6179"
     }
   }
 
@@ -42,10 +42,8 @@ class Set1 extends Specification {
     }
 
     "decrypt single-byte XOR" in {
-      val key = 'X'.toByte
-      val fixedXOR = bytes.map(b => (b ^ key).toChar).mkString
-
-      fixedXOR mustEqual "Cooking MC's like a pound of bacon"
+      val plaintext = XORUtil.singleByte('X'.toByte, bytes).map(_.toChar).mkString
+      plaintext mustEqual "Cooking MC's like a pound of bacon"
     }
   }
 
