@@ -123,7 +123,7 @@ class Set2 extends Specification {
       val blocksize = 16
       val base = "A" * (blocksize - 1)
 
-      val index = (-128 to 127).map { k =>
+      val index = (0 to 256).map { k =>
         val cbytes = ecbOracle(base + k.toChar)
         (k.toChar, cbytes.take(blocksize).toList)
       } toMap
@@ -234,7 +234,7 @@ class Set2 extends Specification {
     "decrypt ECB one byte at a timer with random prefix" in {
       // One thing we can do is reliably generate blocks of a
       // repeated single value, so we do that.
-      val index = (-128 to 127).map { k =>
+      val index = (0 to 256).map { k =>
         val cbytes = ecbOracle(("" + k.toChar) * (2 * blocksize))
         (k.toChar, cbytes.slice(blocksize, 2 * blocksize).toList)
       } toMap
