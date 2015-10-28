@@ -22,11 +22,11 @@ object CBC {
 
   def decrypt(cbytes: Array[Byte], kbytes: Array[Byte], iv: Array[Byte]) = {
     val bytes = (iv ++ cbytes)
-      .grouped(kbytes.length).sliding(2)
+      .grouped(kbytes.length).sliding(2).toArray
       .flatMap { x =>
         val Seq(previousBlock, currentBlock) = x
         XORUtil.fixedXOR(ECB.decrypt(currentBlock, kbytes), previousBlock)
-      } toArray
+      }
 
     bytes.unpadPKCS7
   }
