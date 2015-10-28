@@ -91,7 +91,37 @@ class Set3 extends Specification {
     }
   }
 
-  //"challenge18" should {}
+  "challenge18" should {
+
+    "decrypt AES CTR" in {
+      val ciphertext = Base64Util.decode(
+        "L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==")
+
+      val nonce = Array.fill[Byte](8)(0.toByte)
+      val kbytes = "YELLOW SUBMARINE".toCharArray.map(_.toByte)
+      val cbytes = ciphertext.toCharArray.map(_.toByte)
+
+      val pbytes = AES.CTR.decrypt(cbytes, kbytes, nonce)
+      val plaintext = pbytes.map(_.toChar).mkString
+
+      plaintext mustEqual "Yo, VIP Let's kick it Ice, Ice, baby Ice, Ice, baby "
+    }
+
+    "encrypt AES CTR" in {
+      val nonce = Array.fill[Byte](8)(0.toByte)
+      val kbytes = randBytes(16)
+      val pbytes = "Meaningless Jibber Jabber".toCharArray.map(_.toByte)
+
+      val cbytes = AES.CTR.encrypt(pbytes, kbytes, nonce)
+      val plaintext =
+        AES.CTR.decrypt(cbytes, kbytes, nonce)
+          .map(_.toChar).mkString
+
+      plaintext mustEqual "Meaningless Jibber Jabber"
+    }
+
+  }
+
   //"challenge19" should {}
   //"challenge20" should {}
   //"challenge21" should {}

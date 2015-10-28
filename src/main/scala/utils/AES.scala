@@ -6,6 +6,29 @@ import javax.crypto.spec.SecretKeySpec
 import net.logitank.cryptopals.Padding._
 import net.logitank.cryptopals.XORUtil
 
+object CTR {
+
+  def encrypt(pbytes: Array[Byte], kbytes: Array[Byte], nonce: Array[Byte]) =
+    decrypt(pbytes, kbytes, nonce)
+
+  def decrypt(cbytes: Array[Byte], kbytes: Array[Byte], nonce: Array[Byte]) =
+    ctrMode(cbytes, kbytes, nonce)
+
+  private def ctrMode(input: Array[Byte], kbytes: Array[Byte], nonce: Array[Byte]) = {
+    val blocksize = 16
+    val noncesize = 8
+
+    input.grouped(blocksize).toArray
+      .zipWithIndex
+      .flatMap { xs =>
+        val (cbytes, i) = xs
+        val ctr = Array[Byte](i.toByte) ++ Array.fill[Byte](noncesize - 1)(0.toByte)
+        val sbytes = ECB.encrypt(nonce ++ ctr, kbytes)
+        XORUtil.fixedXOR(sbytes, cbytes)
+      }
+  }
+}
+
 object CBC {
 
   def encrypt(pbytes: Array[Byte], kbytes: Array[Byte], iv: Array[Byte]) = {
