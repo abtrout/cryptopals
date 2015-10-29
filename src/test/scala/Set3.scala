@@ -121,6 +121,20 @@ class Set3 extends Specification {
     }
   }
 
+  def rankGuess(k: Char, bytes: Array[Byte]) = {
+    val guess = bytes.map(b => (b ^ k).toChar).mkString
+
+    val monograms = "etaoin shrdlucmfgypwbvkxjqz".reverse
+    val bigrams = List("th", "he", "in", "en", "nt", "re",
+      "er", "an", "ti", "es", "on", "at", "se", "nd", "or",
+      "ar", "al", "te", "co", "de", "to", "ra", "et", "ed",
+      "it", "sa", "em", "ro").reverse
+
+    val mg = guess.foldLeft(0)((r,c) => r + monograms.indexOf(c) + 1)
+    val bg = guess.sliding(2).foldLeft(0)((r, c) => r + bigrams.indexOf(c) + 1)
+    math.sqrt(math.pow(mg, 2) + math.pow(bg, 2))
+  }
+
   "challenge19" should {
 
     val inputs = List(
@@ -165,34 +179,21 @@ class Set3 extends Specification {
       "VHJhbnNmb3JtZWQgdXR0ZXJseTo=",
       "QSB0ZXJyaWJsZSBiZWF1dHkgaXMgYm9ybi4=")
 
-    def rankGuess(k: Char, bytes: Array[Byte]) = {
-      val guess = bytes.map(b => (b ^ k).toChar).mkString
+    // Encrypt the Base64 decoded inputs under CTR with the same key and nonce
+    val kbytes = randBytes(16)
+    val nonce = Array.fill[Byte](8)(0.toByte)
 
-      val monograms = "etaoinshrdlucmfgypwbvkxjqz".reverse
-      val bigrams = List("th", "he", "in", "en", "nt", "re",
-        "er", "an", "ti", "es", "on", "at", "se", "nd", "or",
-        "ar", "al", "te", "co", "de", "to", "ra", "et", "ed",
-        "it", "sa", "em", "ro").reverse
-
-      guess.foldLeft(0)((r,c) => r + monograms.indexOf(c) + 1) +
-      guess.sliding(2).foldLeft(0)((r, c) => r + bigrams.indexOf(c) + 1)
+    val ciphertexts = inputs.map { x =>
+      val cbytes = Base64Util.decode(x).toCharArray.map(_.toByte)
+      AES.CTR.encrypt(cbytes, kbytes, nonce)
     }
 
     "break fixed-nonce CTR using substitions" in {
-      // Encrypt the Base64 decoded inputs under CTR with the same key and nonce
-      val kbytes = randBytes(16)
-      val nonce = Array.fill[Byte](8)(0.toByte)
-
-      val ciphertexts = inputs.map { x =>
-        val cbytes = Base64Util.decode(x).toCharArray.map(_.toByte)
-        AES.CTR.encrypt(cbytes, kbytes, nonce)
-      }
-
       val max = ciphertexts.map(_.length).max - 1
       val key = (0 to max).toArray.map { i =>
         // Build a block consisting of every ith byte
         val bytes = ciphertexts.filter(_.length > i).map(_(i)).toArray
-        // And rank guesses by frequency analysis on {1,2}grams
+        // Rank guesses by frequency analysis on {1,2}grams
         (-127 to 128).map(k => (k.toChar, rankGuess(k.toChar, bytes)))
           .maxBy(_._2)._1.toByte
       }
@@ -205,7 +206,38 @@ class Set3 extends Specification {
     }
   }
 
-  //"challenge20" should {}
+  // I used the same strategy for challenge 19
+  // ¯\_(ツ)_/¯
+  "challenge20" should {
+
+    val kbytes = randBytes(16)
+    val nonce = Array.fill[Byte](8)(0.toByte)
+
+    val ciphertexts =
+      Source.fromURL(getClass.getResource("/challenge-data/20.txt"))
+        .getLines.toList.map { x =>
+          val cbytes = Base64Util.decode(x).toCharArray.map(_.toByte)
+          AES.CTR.encrypt(cbytes, kbytes, nonce)
+        }
+
+    "break fixed-nonce CTR statistically" in {
+      val min = ciphertexts.map(_.length).min - 1
+      val key = (0 to min).toArray.map { i =>
+        val bytes = ciphertexts.map(_(i)).toArray
+        (-127 to 128).map(k => (k.toChar, rankGuess(k.toChar, bytes)))
+          .maxBy(_._2)._1.toByte
+      }
+
+      val plaintexts = ciphertexts.map { c =>
+        val tmp = XORUtil.fixedXOR(c, key).map(_.toChar).mkString
+        println("x", tmp)
+        tmp
+      }
+
+      plaintexts.last mustEqual "and we outta here / Yo, what happened to peace? / Pea"
+    }
+  }
+
   //"challenge21" should {}
   //"challenge22" should {}
   //"challenge23" should {}
