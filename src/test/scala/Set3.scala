@@ -25,7 +25,7 @@ class Set3 extends Specification {
         "MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=",
         "MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=",
         "MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93"
-      ).map(Base64Util.decode)
+        ).map(Base64Util.decode)
 
     val blocksize = 16
     val kbytes = randBytes(blocksize)
@@ -119,10 +119,92 @@ class Set3 extends Specification {
 
       plaintext mustEqual "Meaningless Jibber Jabber"
     }
-
   }
 
-  //"challenge19" should {}
+  "challenge19" should {
+
+    val inputs = List(
+      "SSBoYXZlIG1ldCB0aGVtIGF0IGNsb3NlIG9mIGRheQ==",
+      "Q29taW5nIHdpdGggdml2aWQgZmFjZXM=",
+      "RnJvbSBjb3VudGVyIG9yIGRlc2sgYW1vbmcgZ3JleQ==",
+      "RWlnaHRlZW50aC1jZW50dXJ5IGhvdXNlcy4=",
+      "SSBoYXZlIHBhc3NlZCB3aXRoIGEgbm9kIG9mIHRoZSBoZWFk",
+      "T3IgcG9saXRlIG1lYW5pbmdsZXNzIHdvcmRzLA==",
+      "T3IgaGF2ZSBsaW5nZXJlZCBhd2hpbGUgYW5kIHNhaWQ=",
+      "UG9saXRlIG1lYW5pbmdsZXNzIHdvcmRzLA==",
+      "QW5kIHRob3VnaHQgYmVmb3JlIEkgaGFkIGRvbmU=",
+      "T2YgYSBtb2NraW5nIHRhbGUgb3IgYSBnaWJl",
+      "VG8gcGxlYXNlIGEgY29tcGFuaW9u",
+      "QXJvdW5kIHRoZSBmaXJlIGF0IHRoZSBjbHViLA==",
+      "QmVpbmcgY2VydGFpbiB0aGF0IHRoZXkgYW5kIEk=",
+      "QnV0IGxpdmVkIHdoZXJlIG1vdGxleSBpcyB3b3JuOg==",
+      "QWxsIGNoYW5nZWQsIGNoYW5nZWQgdXR0ZXJseTo=",
+      "QSB0ZXJyaWJsZSBiZWF1dHkgaXMgYm9ybi4=",
+      "VGhhdCB3b21hbidzIGRheXMgd2VyZSBzcGVudA==",
+      "SW4gaWdub3JhbnQgZ29vZCB3aWxsLA==",
+      "SGVyIG5pZ2h0cyBpbiBhcmd1bWVudA==",
+      "VW50aWwgaGVyIHZvaWNlIGdyZXcgc2hyaWxsLg==",
+      "V2hhdCB2b2ljZSBtb3JlIHN3ZWV0IHRoYW4gaGVycw==",
+      "V2hlbiB5b3VuZyBhbmQgYmVhdXRpZnVsLA==",
+      "U2hlIHJvZGUgdG8gaGFycmllcnM/",
+      "VGhpcyBtYW4gaGFkIGtlcHQgYSBzY2hvb2w=",
+      "QW5kIHJvZGUgb3VyIHdpbmdlZCBob3JzZS4=",
+      "VGhpcyBvdGhlciBoaXMgaGVscGVyIGFuZCBmcmllbmQ=",
+      "V2FzIGNvbWluZyBpbnRvIGhpcyBmb3JjZTs=",
+      "SGUgbWlnaHQgaGF2ZSB3b24gZmFtZSBpbiB0aGUgZW5kLA==",
+      "U28gc2Vuc2l0aXZlIGhpcyBuYXR1cmUgc2VlbWVkLA==",
+      "U28gZGFyaW5nIGFuZCBzd2VldCBoaXMgdGhvdWdodC4=",
+      "VGhpcyBvdGhlciBtYW4gSSBoYWQgZHJlYW1lZA==",
+      "QSBkcnVua2VuLCB2YWluLWdsb3Jpb3VzIGxvdXQu",
+      "SGUgaGFkIGRvbmUgbW9zdCBiaXR0ZXIgd3Jvbmc=",
+      "VG8gc29tZSB3aG8gYXJlIG5lYXIgbXkgaGVhcnQs",
+      "WWV0IEkgbnVtYmVyIGhpbSBpbiB0aGUgc29uZzs=",
+      "SGUsIHRvbywgaGFzIHJlc2lnbmVkIGhpcyBwYXJ0",
+      "SW4gdGhlIGNhc3VhbCBjb21lZHk7",
+      "SGUsIHRvbywgaGFzIGJlZW4gY2hhbmdlZCBpbiBoaXMgdHVybiw=",
+      "VHJhbnNmb3JtZWQgdXR0ZXJseTo=",
+      "QSB0ZXJyaWJsZSBiZWF1dHkgaXMgYm9ybi4=")
+
+    def rankGuess(k: Char, bytes: Array[Byte]) = {
+      val guess = bytes.map(b => (b ^ k).toChar).mkString
+
+      val monograms = "etaoinshrdlucmfgypwbvkxjqz".reverse
+      val bigrams = List("th", "he", "in", "en", "nt", "re",
+        "er", "an", "ti", "es", "on", "at", "se", "nd", "or",
+        "ar", "al", "te", "co", "de", "to", "ra", "et", "ed",
+        "it", "sa", "em", "ro").reverse
+
+      guess.foldLeft(0)((r,c) => r + monograms.indexOf(c) + 1) +
+      guess.sliding(2).foldLeft(0)((r, c) => r + bigrams.indexOf(c) + 1)
+    }
+
+    "break fixed-nonce CTR using substitions" in {
+      // Encrypt the Base64 decoded inputs under CTR with the same key and nonce
+      val kbytes = randBytes(16)
+      val nonce = Array.fill[Byte](8)(0.toByte)
+
+      val ciphertexts = inputs.map { x =>
+        val cbytes = Base64Util.decode(x).toCharArray.map(_.toByte)
+        AES.CTR.encrypt(cbytes, kbytes, nonce)
+      }
+
+      val max = ciphertexts.map(_.length).max - 1
+      val key = (0 to max).toArray.map { i =>
+        // Build a block consisting of every ith byte
+        val bytes = ciphertexts.filter(_.length > i).map(_(i)).toArray
+        // And rank guesses by frequency analysis on {1,2}grams
+        (-127 to 128).map(k => (k.toChar, rankGuess(k.toChar, bytes)))
+          .maxBy(_._2)._1.toByte
+      }
+
+      val plaintexts = ciphertexts.map { c =>
+        XORUtil.fixedXOR(c, key).map(_.toChar).mkString
+      }
+
+      plaintexts.last mustEqual "a terrible beauty is born."
+    }
+  }
+
   //"challenge20" should {}
   //"challenge21" should {}
   //"challenge22" should {}
