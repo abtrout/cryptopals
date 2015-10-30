@@ -229,17 +229,51 @@ class Set3 extends Specification {
       }
 
       val plaintexts = ciphertexts.map { c =>
-        val tmp = XORUtil.fixedXOR(c, key).map(_.toChar).mkString
-        println("x", tmp)
-        tmp
+        XORUtil.fixedXOR(c, key).map(_.toChar).mkString
       }
 
       plaintexts.last mustEqual "and we outta here / Yo, what happened to peace? / Pea"
     }
   }
 
-  //"challenge21" should {}
-  //"challenge22" should {}
+  "challenge21" should {
+    "implement MT19937 PRNG" in {
+      val r1 = new RandUtil.MT19937(17)
+      val r2 = new RandUtil.MT19937(17)
+
+      // Given the same seed, these should produce the same integers
+      val matches = (0 to 1500).foldLeft(true) { (acc, i) =>
+        acc && (r1.nextInt == r2.nextInt)
+      }
+
+      matches mustEqual true
+    }
+  }
+
+  "challenge22" should {
+    // Simulate a random delay between 40 and 1000 seconds
+    val delay = 40000 + scala.util.Random.nextInt(960000)
+    val seed = System.currentTimeMillis.toInt - delay
+    val r = new RandUtil.MT19937(seed)
+    val x = r.nextInt
+
+    @tailrec
+    def findSeed(ts: Int, dt: Int): Option[Int] = {
+      if(dt > 0) {
+        r.seed(ts - dt)
+
+        if(r.nextInt == x) Some(ts - dt)
+        else findSeed(ts, dt - 1)
+      }
+      else None
+    }
+
+    "crack an MT19937 seed" in {
+      val ts = System.currentTimeMillis.toInt
+      findSeed(ts, 1e6.toInt) mustEqual Some(seed)
+    }
+  }
+
   //"challenge23" should {}
   //"challenge24" should {}
 }
