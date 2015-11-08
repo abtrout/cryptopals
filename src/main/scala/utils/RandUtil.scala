@@ -4,6 +4,8 @@ package net.logitank.cryptopals.RandUtil
 // <https://en.wikipedia.org/wiki/Mersenne_Twister>
 class MT19937(initial: Int = 5289) {
 
+  import net.logitank.cryptopals.XORUtil
+
   private val (w, n, m, r) = (32, 624, 397, 31)
   private var index = n+1
   private val f = 1812433253
@@ -31,13 +33,24 @@ class MT19937(initial: Int = 5289) {
     if(index >= n) twist
 
     var y = mt(index)
-    y = y ^ ((y >> u) & d)
-    y = y ^ ((y << s) & b)
-    y = y ^ ((y << t) & c)
-    y = y ^ (y >> l)
-
     index = index + 1
+    temper(y)
+  }
+
+  def temper(x: Int): Int = {
+    val y0 = x ^ ((x >>> u) & d)
+    val y1 = y0 ^ ((y0 << s) & b)
+    val y2 = y1 ^ ((y1 << t) & c)
+    val y = y2 ^ (y2 >>> l)
     y
+  }
+
+  def untemper(y: Int): Int = {
+    val y2 = XORUtil.invertRightShiftAndXOR(y, d, l)
+    val y1 = XORUtil.invertLeftShiftAndXOR(y2, c, t)
+    val y0 = XORUtil.invertLeftShiftAndXOR(y1, b, s)
+    val x = XORUtil.invertRightShiftAndXOR(y0, d, u)
+    x
   }
 
   private def twist = {

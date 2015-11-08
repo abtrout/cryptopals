@@ -257,7 +257,6 @@ class Set3 extends Specification {
     val r = new RandUtil.MT19937(seed)
     val x = r.nextInt
 
-    @tailrec
     def findSeed(ts: Int, dt: Int): Option[Int] = {
       if(dt > 0) {
         r.seed(ts - dt)
@@ -274,6 +273,15 @@ class Set3 extends Specification {
     }
   }
 
-  //"challenge23" should {}
+  "challenge23" should {
+
+    "untemper output to determine internal state of MT19937 PRNG" in {
+      val mt = new RandUtil.MT19937
+      val x = scala.util.Random.nextInt
+
+      mt.untemper(mt.temper(x)) mustEqual x
+    }
+  }
+
   //"challenge24" should {}
 }

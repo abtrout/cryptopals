@@ -33,4 +33,40 @@ class Utils extends Specification {
       Hamming.distance("this is a test", "wokka wokka!!!") mustEqual 37
     }
   }
+
+  "XORUtil" should {
+
+    def printBytes(xs: List[Int], n: Int): Unit =
+      xs.foreach { x =>
+        val binary = x.toBinaryString
+        val bytes = "0" * (32 - binary.length) + binary
+        println(bytes.grouped(n).mkString(" "))
+      }
+
+    "invert y = x ^ ((x >>> n) & c)" in {
+      val success = (1 to 1000).foldLeft(true) { (acc, _) =>
+        val n = scala.util.Random.nextInt(31) + 1
+        val c = scala.util.Random.nextInt
+        val x = scala.util.Random.nextInt
+        val y = x ^ ((x >>> n) & c)
+
+        acc && XORUtil.invertRightShiftAndXOR(y, c, n) == x
+      }
+
+      success mustEqual true
+    }
+
+    "invert y = x ^ ((x << n) & c)" in {
+      val success = (1 to 1000).foldLeft(true) { (acc, _) =>
+        val n = scala.util.Random.nextInt(31) + 1
+        val c = scala.util.Random.nextInt
+        val x = scala.util.Random.nextInt
+        val y = x ^ ((x << n) & c)
+
+        acc && XORUtil.invertLeftShiftAndXOR(y, c, n) == x
+      }
+
+      success mustEqual true
+    }
+  }
 }
