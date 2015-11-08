@@ -252,14 +252,14 @@ class Set3 extends Specification {
 
   "challenge22" should {
     // Simulate a random delay between 40 and 1000 seconds
-    val delay = 40000 + scala.util.Random.nextInt(960000)
+    val delay = 40000 + Random.nextInt(960000)
     val seed = System.currentTimeMillis.toInt - delay
     val r = new RandUtil.MT19937(seed)
     val x = r.nextInt
 
     def findSeed(ts: Int, dt: Int): Option[Int] = {
       if(dt > 0) {
-        r.seed(ts - dt)
+        r.seedWith(ts - dt)
 
         if(r.nextInt == x) Some(ts - dt)
         else findSeed(ts, dt - 1)
@@ -267,19 +267,29 @@ class Set3 extends Specification {
       else None
     }
 
-    "crack an MT19937 seed" in {
+    "crack an MT19937 seed by brute force" in {
       val ts = System.currentTimeMillis.toInt
       findSeed(ts, 1e6.toInt) mustEqual Some(seed)
     }
   }
 
   "challenge23" should {
-
-    "untemper output to determine internal state of MT19937 PRNG" in {
+    "untemper MT19937 output to find internal state" in {
       val mt = new RandUtil.MT19937
-      val x = scala.util.Random.nextInt
-
+      val x = Random.nextInt
       mt.untemper(mt.temper(x)) mustEqual x
+    }
+
+    "clone an MT19937 PRNG from its output" in {
+      val r1 = new RandUtil.MT19937(Random.nextInt)
+
+      val mt = (1 to 624).map(_ => r1.untemper(r1.nextInt)).toArray
+      val r2 = new RandUtil.MT19937(Random.nextInt, Some(mt))
+      val matches = (0 to 1500).foldLeft(true) { (acc, _) =>
+        acc && (r1.nextInt == r2.nextInt)
+      }
+
+      matches mustEqual true
     }
   }
 

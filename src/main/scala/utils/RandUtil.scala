@@ -2,7 +2,7 @@ package net.logitank.cryptopals.RandUtil
 
 // Mersenne Twister PRNG (MT19937)
 // <https://en.wikipedia.org/wiki/Mersenne_Twister>
-class MT19937(initial: Int = 5289) {
+class MT19937(seed: Int = 5289, initialState: Option[Array[Int]] = None) {
 
   import net.logitank.cryptopals.XORUtil
 
@@ -18,10 +18,10 @@ class MT19937(initial: Int = 5289) {
   private val upperMask = ~lowerMask
 
   // Initialize generator from provided seed
-  private val mt = Array.fill[Int](n)(0)
-  seed(initial)
+  private val mt = initialState.getOrElse(Array.fill[Int](n)(0))
+  if(initialState.isEmpty) seedWith(seed)
 
-  def seed(s: Int) = {
+  def seedWith(s: Int) = {
     index = n
     mt(0) = s
     (1 until n).foreach { i =>
