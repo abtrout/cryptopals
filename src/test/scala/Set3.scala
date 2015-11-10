@@ -293,5 +293,49 @@ class Set3 extends Specification {
     }
   }
 
-  //"challenge24" should {}
+  "challenge24" should {
+    def encrypt(pbytes: Array[Byte], seed: Int): Array[Byte] = {
+      val r = new RandUtil.MT19937(seed)
+      // Note: converting from 32-bit Int to 8-bit Int by way of Byte
+      pbytes.map(x => (x ^ (r.nextInt.toByte.toInt)).toByte)
+    }
+
+    def decrypt(cbytes: Array[Byte], seed: Int) = encrypt(cbytes, seed)
+
+    "implement stream cipher from MT19937 PRNG" in {
+      // Note: converting from 32-bit Int to 16-bit Int by way of Short
+      val seed = Random.nextInt.toShort.toInt
+
+      val plaintext = "We all live in a yellow submarine, yellow submarine, yellow submarine."
+      val cbytes = encrypt(plaintext.toCharArray.map(_.toByte), seed)
+      val pbytes = decrypt(cbytes, seed)
+
+      pbytes.map(_.toChar).mkString mustEqual plaintext
+    }
+
+    def findSeed(pbytes: Array[Byte], cbytes: Array[Byte]): Option[Int] = {
+      val padding = cbytes.length - pbytes.length
+
+      def trySeed(x: Int): Option[Int] = {
+        if(x > 32767) None
+        else {
+          val tmp = decrypt(cbytes, x).drop(padding)
+          // TODO: Using .toList for comparison. Do something better.
+          if(tmp.toList == pbytes.toList) Some(x)
+          else trySeed(x + 1)
+        }
+      }
+
+      trySeed(-32768)
+    }
+
+    "recover key from known plaintext/ciphertext" in {
+      val seed = Random.nextInt.toShort.toInt
+      val padding = randBytes(Random.nextInt(20))
+      val pbytes = ("A" * 14).toCharArray.map(_.toByte)
+      val cbytes = encrypt(padding ++ pbytes, seed)
+
+      findSeed(pbytes, cbytes) must beSome(seed)
+    }
+  }
 }
