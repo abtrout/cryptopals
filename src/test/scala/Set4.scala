@@ -36,4 +36,42 @@ object Set4 extends Specification {
       plaintext must startWith("I'm back and I'm ringin' the bell")
     }
   }
+
+  "challenge26" should {
+    val kbytes = randBytes(16)
+    val nonce = randBytes(8)
+
+    def getUser(input: String) = {
+      val quotedInput = input.replaceAll(" ", "%20")
+        .replaceAll(";", "%3B")
+        .replaceAll("=", "%3D")
+
+      val pbytes = List(
+          "comment1=cooking%20MCs",
+          s"userdata=$quotedInput",
+          "comment2=%20like%20a%20pound%20of%20bacon"
+        ).mkString(";").toCharArray.map(_.toByte)
+
+      AES.CTR.encrypt(pbytes, kbytes, nonce)
+    }
+
+    def isAdminUser(cbytes: Array[Byte]) =
+      AES.CTR.decrypt(cbytes, kbytes, nonce)
+        .map(_.toChar).mkString.split(';')
+        .find(_ == "admin=true")
+        .isDefined
+
+    "generates User data" in {
+      val cbytes = getUser("van winckle;admin=true")
+      isAdminUser(cbytes) mustEqual false
+    }
+
+    "flip CTR bits to generate admin user" in {
+      val cbytes = getUser("AAAAA#admin@true")
+      cbytes(37) = (cbytes(37).toInt ^ '#'.toInt ^ ';'.toInt).toByte
+      cbytes(43) = (cbytes(43).toInt ^ '@'.toInt ^ '='.toInt).toByte
+
+      isAdminUser(cbytes) mustEqual true
+    }
+  }
 }
