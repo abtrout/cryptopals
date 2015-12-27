@@ -74,4 +74,51 @@ object Set4 extends Specification {
       isAdminUser(cbytes) mustEqual true
     }
   }
+
+  "challenge27" should {
+    // Again we have a fixed/unknown key. For this challenge, we exploit
+    // the fact that reusing the key for IV compromises CBC mode.
+    val blocksize = 16
+    val kbytes = randBytes(blocksize)
+    val iv = kbytes
+
+    def getUser(input: String) = {
+      val quotedInput = input.replaceAll(" ", "%20")
+        .replaceAll(";", "%3B")
+        .replaceAll("=", "%3D")
+
+      val pbytes = List(
+          "comment1=cooking%20MCs",
+          s"userdata=$quotedInput",
+          "comment2=%20like%20a%20pound%20of%20bacon"
+        ).mkString(";").toCharArray.map(_.toByte)
+
+      AES.CBC.encrypt(pbytes, kbytes, iv)
+    }
+
+    // The challenge instructions suggested detecting non-ASCII unicode in unencrypted
+    // plaintext and throwing an Exception. We're ignoring those instructions, Rather than
+    // doing that, just to catch the Exception and look at the bytes.
+    def readUser(cbytes: Array[Byte]) = AES.CBC.decrypt(cbytes, kbytes, iv)
+
+    "recover key from CBC when IV = key" in {
+      val cbytes = getUser("A" * blocksize)
+      val pbytes = readUser {
+        cbytes.take(1 * blocksize) ++
+        Array.fill[Byte](blocksize)(0) ++
+        cbytes.take(1 * blocksize) ++
+        cbytes.drop(3 * blocksize)
+      }
+
+      val key = XORUtil.fixedXOR(pbytes.take(blocksize), pbytes.drop(2 * blocksize))
+      // Continuing to run with this Array[Byte] thing :\. We have to use .deep to do comparison.
+      key.deep mustEqual kbytes.deep
+    }
+  }
+
+  //"challenge28" should {}
+  //"challenge29" should {}
+  //"challenge30" should {}
+  //"challenge31" should {}
+  //"challenge32" should {}
 }
